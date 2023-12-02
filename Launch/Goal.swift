@@ -8,18 +8,18 @@
 import SpriteKit
 
 let defaultColor = UIColor(red: 0.4, green: 0.4, blue: 0.9, alpha: 0.8)
+let initLocation = CGPoint(x: 0, y: 300)
 
 class Goal {
     var color: UIColor
     private var goal: SKSpriteNode?
     var categories: UInt32
     
-    let initLocation = CGPoint(x: 0, y: 350)
-    
     init (color: UIColor = defaultColor,categories: UInt32 = PhysicsCategories.goal) {
         self.color = color
         self.categories = categories
         goal = initNode()
+        setPosition(reset: true)
     }
     
     func getNode() -> SKSpriteNode {
@@ -46,17 +46,19 @@ class Goal {
         goal.physicsBody?.collisionBitMask = 0
         goal.physicsBody?.contactTestBitMask = PhysicsCategories.block
         goal.physicsBody?.isDynamic = false
-        setPosition(at: self.initLocation)
         
         return goal
     }
     
-    func setPosition(at position: CGPoint? = nil) {
+    func setPosition(at position: CGPoint? = nil, reset: Bool = false) {
         guard goal != nil else { return }
         var targetPosition = position
-        if targetPosition == nil {
+        if reset  {
+            targetPosition = initLocation
+        }else if targetPosition == nil {
             targetPosition = RandLocation()
         }
+        
         goal!.position = targetPosition!
     }
     

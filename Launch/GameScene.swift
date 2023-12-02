@@ -11,15 +11,13 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     var scoreLabel: SKLabelNode!
     var resetButton: SKLabelNode!
     var block: SKShapeNode?
-    var goal: SKSpriteNode?
     let slingShotCenter = CGPoint(x: 0, y: -300)
-    let goalPostion = CGPoint(x: 0, y: 300)
     let maxSlingDistance: CGFloat = 150.0
     let slingshotRadius: CGFloat = 3
     var score: Int = 0
     var goalledNum: Int = 0
     var isDraggingBlock = false
-    var newGoal: Goal = Goal()
+    var goal: Goal = Goal()
     var superGoal: Goal = Goal(color: UIColor.yellow,categories: PhysicsCategories.superGoal)
 
     var isGoalled: Bool = false
@@ -27,7 +25,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     override func didMove(to view: SKView) {
         self.physicsWorld.contactDelegate = self
         
-        newGoal.addChildToSence(self)
+        goal.addChildToSence(self)
         
         scoreLabel = SKLabelNode(fontNamed: "Arial")
         scoreLabel.position = CGPoint(x: 0, y: 350)
@@ -116,6 +114,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
              
             let ssc = slingShotCenter
             self.createBlock(at: ssc)
+            superGoal.remove()
             if isGoalled {
                 renewAllGoal()
                 if (goalledNum % 7) == 0 {
@@ -136,7 +135,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             case PhysicsCategories.goal:
                 goalledNum += 1
                 score += GoalScore.goal
-                newGoal.remove()
+                goal.remove()
+                isGoalled = true
             case PhysicsCategories.superGoal:
                 score += GoalScore.superGoal
                 superGoal.remove()
@@ -144,7 +144,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                 print("do nothing")
             }
             
-            isGoalled = true
             scoreLabel.text = "\(score)"
         }
     }
@@ -164,11 +163,12 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         self.addChild(block!)
     }
 
-    
+    // remove score and reset goal
     func resetScore() {
         score = 0
         scoreLabel.text = "Drag!"
-        renewAllGoal()
+        goal.setPosition(reset: true)
+        superGoal.remove()
     }
     
     func showConfirmationDialog() {
@@ -205,8 +205,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         childNode(withName: "mask")?.removeFromParent()
     }
     
+    // renew goal and remove super goal
     func renewAllGoal() {
-        newGoal.renew(self)
+        goal.renew(self)
         superGoal.remove()
     }
 }
