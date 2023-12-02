@@ -17,10 +17,17 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     let maxSlingDistance: CGFloat = 150.0
     let slingshotRadius: CGFloat = 3
     var score: Int = 0
+    var goalledNum: Int = 0
     var isDraggingBlock = false
+    var newGoal: Goal = Goal()
+    var superGoal: Goal = Goal(color: UIColor.yellow,categories: PhysicsCategories.superGoal)
+
+    var isGoalled: Bool = false
     
     override func didMove(to view: SKView) {
         self.physicsWorld.contactDelegate = self
+        
+        newGoal.addChildToSence(self)
         
         scoreLabel = SKLabelNode(fontNamed: "Arial")
         scoreLabel.position = CGPoint(x: 0, y: 350)
@@ -44,8 +51,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         slingshot.position = slingShotCenter
         slingshot.fillColor = .gray
         addChild(slingshot)
-        
-        createGoal(at: goalPostion)
+
         createBlock(at: slingShotCenter)
     }
     
@@ -69,7 +75,10 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             }
         default:
             createBlock(at: slingShotCenter)
-            createGoal(at: RandLocation())
+            if isGoalled {
+                renewAllGoal()
+                isGoalled = false
+            }
         }
     }
     
@@ -93,7 +102,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         if isDraggingBlock {
             let dx = slingShotCenter.x - block!.position.x
             let dy = slingShotCenter.y - block!.position.y
-            let launchVelocity = CGVector(dx: dx * 1.2, dy: dy * 1.1)
+            let launchVelocity = CGVector(dx: dx * 1, dy: dy * 1)
             block!.physicsBody!.isDynamic = true
             block!.physicsBody!.applyImpulse(launchVelocity)
             isDraggingBlock = false
@@ -106,24 +115,37 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             self.block = nil
              
             let ssc = slingShotCenter
-            let delayAction = SKAction.wait(forDuration: 0.2)
-            let createAction = SKAction.run { [weak self] in
-                self?.createBlock(at: ssc)
-                self?.createGoal(at: nil)
+            self.createBlock(at: ssc)
+            if isGoalled {
+                renewAllGoal()
+                if (goalledNum % 7) == 0 {
+                    superGoal.addChildToSence(self)
+                }
+                isGoalled = false
             }
-            self.run(SKAction.sequence([delayAction, createAction]))
         }
     }
 
     func didBegin(_ contact: SKPhysicsContact) {
         let mask = contact.bodyA.categoryBitMask | contact.bodyB.categoryBitMask
-
-        if mask == (PhysicsCategories.block | PhysicsCategories.goal) {
-            score += 1
+        
+        if mask != PhysicsCategories.block {
+            let goalType = mask ^ PhysicsCategories.block
             
+            switch goalType {
+            case PhysicsCategories.goal:
+                goalledNum += 1
+                score += GoalScore.goal
+                newGoal.remove()
+            case PhysicsCategories.superGoal:
+                score += GoalScore.superGoal
+                superGoal.remove()
+            default:
+                print("do nothing")
+            }
+            
+            isGoalled = true
             scoreLabel.text = "\(score)"
-            self.goal?.removeFromParent()
-            self.goal = nil
         }
     }
 
@@ -142,43 +164,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         self.addChild(block!)
     }
 
-    func createGoal(at position: CGPoint?, reset: Bool = false) {
-        guard reset || goal == nil else {
-            return
-        }
-        
-        var targetPostion = position
-        if targetPostion == nil {
-            targetPostion = RandLocation()
-        }
-        
-        if goal != nil {
-            goal?.removeFromParent()
-        }
-        
-        goal = SKSpriteNode(color: UIColor(red: 0.4, green: 0.4, blue: 0.9, alpha: 0.8), size: CGSize(width: 100, height:10))
-        
-        goal!.position = targetPostion!
-        goal!.physicsBody = SKPhysicsBody(rectangleOf: goal!.size)
-        goal!.physicsBody?.categoryBitMask = PhysicsCategories.goal
-        goal!.physicsBody?.collisionBitMask = 0
-        goal!.physicsBody?.contactTestBitMask = PhysicsCategories.block
-        goal!.physicsBody?.isDynamic = false
-        self.addChild(goal!)
-    }
-    
-    
-    func RandLocation() -> CGPoint {
-        let x: Int = Int.random(in: -250...250)
-        let y: Int = Int.random(in: 0...400)
-        
-        return CGPoint(x: x, y: y)
-    }
     
     func resetScore() {
         score = 0
         scoreLabel.text = "Drag!"
-        createGoal(at: goalPostion, reset: true)
+        renewAllGoal()
     }
     
     func showConfirmationDialog() {
@@ -214,10 +204,23 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     func hideConfirmationDialog() {
         childNode(withName: "mask")?.removeFromParent()
     }
+    
+    func renewAllGoal() {
+        newGoal.renew(self)
+        superGoal.remove()
+    }
 }
 
 
 struct PhysicsCategories {
     static let block: UInt32 = 0x1 << 1
     static let goal: UInt32 = 0x1 << 2
+    static let superGoal: UInt32 = 0x1 << 3
+    
+    static let allGoal: UInt32 = goal | superGoal
+}
+
+struct GoalScore {
+    static let goal: Int = 1
+    static let superGoal: Int = 3
 }
