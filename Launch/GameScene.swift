@@ -182,36 +182,38 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
     
     func showConfirmationDialog() {
-            let mask = SKShapeNode(rect: self.frame)
-            mask.fillColor = UIColor.black.withAlphaComponent(0.5)
-            mask.zPosition = 100
-            mask.name = "mask"
-            addChild(mask)
+        let mask = SKShapeNode(rect: self.frame)
+        mask.fillColor = UIColor.black.withAlphaComponent(0.5)
+        mask.zPosition = 100
+        mask.name = "mask"
+        addChild(mask)
 
-            let confirmButton = SKLabelNode(fontNamed: "Arial")
-            confirmButton.text = "Confirm"
-            confirmButton.fontSize = 24
-            confirmButton.position = CGPoint(x: 0, y: 30)
-            confirmButton.name = "confirmButton"
-            mask.addChild(confirmButton)
+        let confirmButton = SKLabelNode(fontNamed: "Arial")
+        confirmButton.text = "Confirm"
+        confirmButton.fontSize = 24
+        confirmButton.position = CGPoint(x: 100 + confirmButton.frame.minX, y: 0)
+        confirmButton.name = "confirmButton"
+        confirmButton.fontColor = UIColor.red
+        mask.addChild(confirmButton)
 
-            let cancelButton = SKLabelNode(fontNamed: "Arial")
-            cancelButton.text = "Cancel"
-            cancelButton.fontSize = 24
-            cancelButton.position = CGPoint(x: 0, y: -30)
-            cancelButton.name = "cancelButton"
-            mask.addChild(cancelButton)
+        let cancelButton = SKLabelNode(fontNamed: "Arial")
+        cancelButton.text = "Cancel"
+        cancelButton.fontSize = 24
+        cancelButton.position = CGPoint(x: -100 - cancelButton.frame.minX, y: 0)
+        cancelButton.name = "cancelButton"
+        cancelButton.fontColor = UIColor.gray
+        mask.addChild(cancelButton)
 
-            let message = SKLabelNode(fontNamed: "Arial")
-            message.text = "Are you sure?"
-            message.fontSize = 30
-            message.position = CGPoint(x: 0, y: 90)
-            mask.addChild(message)
-        }
+        let message = SKLabelNode(fontNamed: "Arial")
+        message.text = "Are you sure to reset score?"
+        message.fontSize = 30
+        message.position = CGPoint(x: 0, y: 90)
+        mask.addChild(message)
+    }
 
-        func hideConfirmationDialog() {
-            childNode(withName: "mask")?.removeFromParent()
-        }
+    func hideConfirmationDialog() {
+        childNode(withName: "mask")?.removeFromParent()
+    }
 }
 
 
