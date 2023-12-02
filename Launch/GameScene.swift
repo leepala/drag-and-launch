@@ -9,6 +9,7 @@ import SpriteKit
 
 class GameScene: SKScene, SKPhysicsContactDelegate {
     var scoreLabel: SKLabelNode!
+    var resetButton: SKLabelNode!
     var block: SKShapeNode?
     var goal: SKSpriteNode?
     let slingShotCenter = CGPoint(x: 0, y: -300)
@@ -27,6 +28,16 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         scoreLabel.text = "Drag!"
         addChild(scoreLabel)
         
+        resetButton = SKLabelNode(fontNamed: "Arial")
+        resetButton.text = "RESET"
+        resetButton.fontSize = 24
+        resetButton.horizontalAlignmentMode = .right
+        resetButton.verticalAlignmentMode = .bottom
+        resetButton.name = "resetButton"
+        resetButton.position = CGPoint(x: self.size.width/2 + resetButton.frame.minX, y: self.size.height/2 + resetButton.frame.minX)
+        addChild(resetButton)
+
+        
         self.physicsWorld.gravity = CGVector(dx: 0, dy: -9.8)
         
         let slingshot = SKShapeNode(circleOfRadius: slingshotRadius)
@@ -40,12 +51,25 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first else { return }
-        guard block != nil else { return }
         let location = touch.location(in: self)
+        let touchedNode = self.atPoint(location)
         
-        if block!.frame.contains(location) {
-            isDraggingBlock = true
-            block!.physicsBody!.isDynamic = false
+        switch touchedNode.name {
+        case resetButton.name:
+            showConfirmationDialog()
+        case "confirmButton":
+            resetScore()
+            hideConfirmationDialog()
+        case "cancelButton":
+            hideConfirmationDialog()
+        case block?.name:
+            if block!.frame.contains(location) {
+                isDraggingBlock = true
+                block!.physicsBody!.isDynamic = false
+            }
+        default:
+            createBlock(at: slingShotCenter)
+            createGoal(at: RandLocation())
         }
     }
     
@@ -105,6 +129,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
     
     func createBlock(at position: CGPoint) {
+        block?.removeFromParent()
+        
         block = SKShapeNode(circleOfRadius: 20)
         block!.position = position
         block!.fillColor = .red
@@ -116,12 +142,18 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         self.addChild(block!)
     }
 
-    func createGoal(at position: CGPoint?) {
-        guard goal == nil else { return }
+    func createGoal(at position: CGPoint?, reset: Bool = false) {
+        guard reset || goal == nil else {
+            return
+        }
         
         var targetPostion = position
         if targetPostion == nil {
             targetPostion = RandLocation()
+        }
+        
+        if goal != nil {
+            goal?.removeFromParent()
         }
         
         goal = SKSpriteNode(color: UIColor(red: 0.4, green: 0.4, blue: 0.9, alpha: 0.8), size: CGSize(width: 100, height:10))
@@ -142,6 +174,44 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         
         return CGPoint(x: x, y: y)
     }
+    
+    func resetScore() {
+        score = 0
+        scoreLabel.text = "Drag!"
+        createGoal(at: goalPostion, reset: true)
+    }
+    
+    func showConfirmationDialog() {
+            let mask = SKShapeNode(rect: self.frame)
+            mask.fillColor = UIColor.black.withAlphaComponent(0.5)
+            mask.zPosition = 100
+            mask.name = "mask"
+            addChild(mask)
+
+            let confirmButton = SKLabelNode(fontNamed: "Arial")
+            confirmButton.text = "Confirm"
+            confirmButton.fontSize = 24
+            confirmButton.position = CGPoint(x: 0, y: 30)
+            confirmButton.name = "confirmButton"
+            mask.addChild(confirmButton)
+
+            let cancelButton = SKLabelNode(fontNamed: "Arial")
+            cancelButton.text = "Cancel"
+            cancelButton.fontSize = 24
+            cancelButton.position = CGPoint(x: 0, y: -30)
+            cancelButton.name = "cancelButton"
+            mask.addChild(cancelButton)
+
+            let message = SKLabelNode(fontNamed: "Arial")
+            message.text = "Are you sure?"
+            message.fontSize = 30
+            message.position = CGPoint(x: 0, y: 90)
+            mask.addChild(message)
+        }
+
+        func hideConfirmationDialog() {
+            childNode(withName: "mask")?.removeFromParent()
+        }
 }
 
 
