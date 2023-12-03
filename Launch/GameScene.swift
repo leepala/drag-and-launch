@@ -86,13 +86,13 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let offset = CGPoint(x: location.x - slingShotCenter.x, y: location.y - slingShotCenter.y)
         let distance = sqrt(offset.x * offset.x + offset.y * offset.y)
         if location.y > slingShotCenter.y {
-            location.x = slingShotCenter.x + (offset.x / distance) * maxSlingDistance
             location.y = slingShotCenter.y
         } else if distance > maxSlingDistance {
             location.y = slingShotCenter.y + (offset.y / distance) * maxSlingDistance
             location.x = slingShotCenter.x + (offset.x / distance) * maxSlingDistance
         }
         
+        print(location)
         block!.position = location
     }
     
@@ -100,7 +100,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         if isDraggingBlock {
             let dx = slingShotCenter.x - block!.position.x
             let dy = slingShotCenter.y - block!.position.y
-            let launchVelocity = CGVector(dx: dx * 1, dy: dy * 1)
+            let launchVelocity = CGVector(dx: dx * 0.8, dy: dy * 0.8)
             block!.physicsBody!.isDynamic = true
             block!.physicsBody!.applyImpulse(launchVelocity)
             isDraggingBlock = false
